@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Админ-панель AI Ассистента</h1>
+        <p>Управление функциями и промптами Gemini API</p>
+    </header>
+    <main>
+        <section id="prompt-list">
+            <h2>Список функций и промптов</h2>
+            <div id="prompts-container">
+                <!-- Prompts will be loaded here by JavaScript -->
+            </div>
+            <button id="save-all-btn" disabled>Сохранить все промпты (Commit to GitHub)</button>
+            <p id="status-message"></p>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 AI Shop Assistant Prototype</p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
