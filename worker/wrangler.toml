@@ -1,0 +1,24 @@
+name = "ai-shop-assistant-worker"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# These variables will be used by the worker to interact with GitHub.
+# Replace 'YOUR_GITHUB_USERNAME' with your actual GitHub username.
+[vars]
+GITHUB_OWNER = "YOUR_GITHUB_USERNAME"
+GITHUB_REPO = "ai-shop-assistant"
+PROMPTS_PATH = "prompts.json"
+
+# --- SECRETS --- #
+# You must add these secrets in your Cloudflare Worker's settings dashboard.
+# Do not write them here directly.
+#
+# 1. GEMINI_API_KEY: Your Google AI Studio API key for the Gemini model.
+#    $ npx wrangler secret put GEMINI_API_KEY
+#
+# 2. GITHUB_PAT: A GitHub Personal Access Token with 'repo' scope to allow the worker
+#    to commit changes to the prompts.json file.
+#    $ npx wrangler secret put GITHUB_PAT
+#
+# 3. TELEGRAM_BOT_TOKEN: The token for your Telegram bot, obtained from BotFather.
+#    $ npx wrangler secret put TELEGRAM_BOT_TOKEN
