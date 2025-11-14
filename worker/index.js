@@ -175,6 +175,83 @@ async function handleSavePrompts(request, env) {
     }
 }
 
+// --- Telegram Bot Functions ---
+
+/**
+ * Sends a message back to the Telegram user.
+ * @param {string} chatId - The chat ID to send the message to.
+ * @param {string} text - The message text.
+ * @param {string} token - The Telegram Bot Token.
+ */
+async function sendTelegramMessage(chatId, text, token) {
+    const telegramApiUrl = `https://api.telegram.org/bot${token}/sendMessage`;
+    await fetch(telegramApiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: text,
+            parse_mode: "Markdown"
+        }),
+    });
+}
+
+/**
+ * Handles incoming Telegram Webhook updates.
+ * @param {Request} request
+ * @param {object} env - Environment variables/secrets.
+ */
+async function handleTelegramWebhook(request, env) {
+    if (!env.TELEGRAM_BOT_TOKEN) {
+        return new Response("TELEGRAM_BOT_TOKEN is not configured.", { status: 500 });
+    }
+
+    try {
+        const update = await request.json();
+        const message = update.message;
+
+        if (!message || !message.text) {
+            return new Response("OK", { status: 200 }); // Ignore non-text messages
+        }
+
+        const chatId = message.chat.id;
+        const userText = message.text.trim();
+        
+        // For the prototype, we default to the product recommendation function.
+        // In a real app, you'd use commands or NLP to determine the function_id.
+        const functionId = "product_recommendation"; 
+
+        // Simulate a call to the internal chat handler
+        const chatRequest = new Request("https://placeholder.com/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: userText, function_id: functionId }),
+        });
+
+        const chatResponse = await handleChat(chatRequest, env);
+        const chatJson = await chatResponse.json();
+
+        let responseText;
+        if (chatJson.error) {
+            responseText = `Произошла ошибка: ${chatJson.error}`;
+        } else {
+            responseText = chatJson.response;
+        }
+
+        await sendTelegramMessage(chatId, responseText, env.TELEGRAM_BOT_TOKEN);
+
+        return new Response("OK", { status: 200 });
+
+    } catch (error) {
+        console.error("Telegram Webhook Error:", error.message);
+        // Send a generic error message back to the user
+        if (update && update.message && update.message.chat) {
+             await sendTelegramMessage(update.message.chat.id, "Извините, произошла внутренняя ошибка сервера.", env.TELEGRAM_BOT_TOKEN);
+        }
+        return new Response("Error", { status: 500 });
+    }
+}
+
 // --- Main Worker Listener ---
 
 export default {
@@ -206,6 +283,11 @@ export default {
         if (url.pathname === "/api/save-prompts" && request.method === "POST") {
             const response = await handleSavePrompts(request, env);
             return new Response(response.body, { status: response.status, headers });
+        }
+        
+        if (url.pathname === "/telegram-webhook" && request.method === "POST") {
+            // No CORS headers needed for Telegram webhook
+            return handleTelegramWebhook(request, env);
         }
 
         return new Response(JSON.stringify({ message: "AI Shop Assistant Worker is running." }), { status: 200, headers });
