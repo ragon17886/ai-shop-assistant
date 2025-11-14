@@ -5,7 +5,7 @@ compatibility_date = "2024-01-01"
 # These variables will be used by the worker to interact with GitHub.
 # Replace 'YOUR_GITHUB_USERNAME' with your actual GitHub username.
 [vars]
-GITHUB_OWNER = "YOUR_GITHUB_USERNAME"
+GITHUB_OWNER = "ragon17886"
 GITHUB_REPO = "ai-shop-assistant"
 PROMPTS_PATH = "prompts.json"
 
