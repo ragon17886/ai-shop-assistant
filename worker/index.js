@@ -175,6 +175,52 @@ async function handleSavePrompts(request, env) {
     }
 }
 
+// --- CRM Bot Functions ---
+
+/**
+ * Handles incoming CRM Webhook updates.
+ * For this prototype, we assume the CRM sends a simple JSON: { "chat_id": "...", "text": "..." }
+ * The Worker will respond directly with the AI's answer.
+ * @param {Request} request
+ * @param {object} env - Environment variables/secrets.
+ */
+async function handleCrmWebhook(request, env) {
+    try {
+        const update = await request.json();
+        const userText = update.text;
+        const chatId = update.chat_id; // Used for logging/tracking, not for sending a message back
+
+        if (!userText) {
+            return new Response(JSON.stringify({ status: "ignored", reason: "No text in update" }), { status: 200, headers: { "Content-Type": "application/json" } });
+        }
+        
+        // For the prototype, we default to the product recommendation function.
+        const functionId = "product_recommendation"; 
+
+        // Simulate a call to the internal chat handler
+        const chatRequest = new Request("https://placeholder.com/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: userText, function_id: functionId }),
+        });
+
+        const chatResponse = await handleChat(chatRequest, env);
+        const chatJson = await chatResponse.json();
+
+        if (chatJson.error) {
+            // Return the error to the CRM module
+            return new Response(JSON.stringify({ error: `Произошла ошибка AI: ${chatJson.error}` }), { status: 500, headers: { "Content-Type": "application/json" } });
+        } else {
+            // Return the AI response directly to the CRM module
+            return new Response(JSON.stringify({ response: chatJson.response }), { status: 200, headers: { "Content-Type": "application/json" } });
+        }
+
+    } catch (error) {
+        console.error("CRM Webhook Error:", error.message);
+        return new Response(JSON.stringify({ error: `Internal Server Error during CRM processing: ${error.message}` }), { status: 500, headers: { "Content-Type": "application/json" } });
+    }
+}
+
 // --- Telegram Bot Functions ---
 
 /**
@@ -288,6 +334,11 @@ export default {
         if (url.pathname === "/telegram-webhook" && request.method === "POST") {
             // No CORS headers needed for Telegram webhook
             return handleTelegramWebhook(request, env);
+        }
+        
+        if (url.pathname === "/crm-webhook" && request.method === "POST") {
+            // No CORS headers needed for CRM webhook
+            return handleCrmWebhook(request, env);
         }
 
         return new Response(JSON.stringify({ message: "AI Shop Assistant Worker is running." }), { status: 200, headers });
